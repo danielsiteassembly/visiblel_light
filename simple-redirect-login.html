@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supercluster Access - Visible Light</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Helvetica', Arial, sans-serif;
+            background: #000000;
+            color: #FFF4E9;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .logo {
+            margin-bottom: 30px;
+        }
+        
+        .logo img {
+            height: 80px;
+            width: auto;
+            filter: drop-shadow(0 0 20px rgba(255, 128, 0, 0.3));
+        }
+        
+        .title {
+            color: #FF8000;
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #FFF4E9;
+            font-size: 1rem;
+            margin-bottom: 30px;
+            opacity: 0.8;
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: #FF8000;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .login-btn:hover {
+            background: #E67300;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            color: #FFF4E9;
+            font-size: 0.8rem;
+            opacity: 0.6;
+        }
+        
+        .info {
+            background: #1f1e1c;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #2E2C2A;
+            margin-bottom: 20px;
+        }
+        
+        .info h3 {
+            color: #FF8000;
+            margin-bottom: 10px;
+        }
+        
+        .info p {
+            color: #FFF4E9;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Container -->
+    <div class="login-container">
+        <!-- Logo -->
+        <div class="logo">
+            <img src="https://visiblelight.ai/wp-content/plugins/visiblelight/luna-license-manager/assets/icons/visiblelightailogo.svg" alt="Visible Light" onerror="this.style.display='none'">
+        </div>
+        
+        <!-- Title -->
+        <h1 class="title">Supercluster Access</h1>
+        <p class="subtitle">Access the AI Constellation Console</p>
+        
+        <!-- Info -->
+        <div class="info">
+            <h3>Client Login Required</h3>
+            <p>Click the button below to access the WordPress login page. Use your client credentials to authenticate and access the Supercluster console.</p>
+        </div>
+        
+        <!-- Login Button -->
+        <a href="https://visiblelight.ai/wp-login.php?redirect_to=https://visiblelight.ai/ai-constellation-console/" class="login-btn">
+            Access Supercluster Login
+        </a>
+        
+        <!-- Alternative Login Button -->
+        <a href="https://visiblelight.ai/wp-login.php" class="login-btn" style="margin-top: 10px; background: #2E2C2A; color: #FFF4E9;">
+            Alternative Login (if above fails)
+        </a>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p>© 2024 Visible Light. All rights reserved.</p>
+        </div>
+    </div>
+
+    <script>
+        // Check if user is already logged in
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('https://visiblelight.ai/wp-json/wp/v2/users/me', {
+                credentials: 'include'
+            })
+            .then(response => {
+                if (response.ok) {
+                    // User is already logged in, redirect to console
+                    window.location.href = 'https://visiblelight.ai/ai-constellation-console/';
+                }
+            })
+            .catch(error => {
+                // User not logged in, show login page
+                console.log('User not authenticated, showing login page');
+            });
+        });
+    </script>
+</body>
+</html>

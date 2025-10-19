@@ -1,0 +1,1397 @@
+<!-- wp:group {"tagName":"main","style":{"spacing":{"padding":{"top":"0","right":"0","bottom":"0","left":"0"}},"backgroundColor":"black","textColor":"white","layout":{"type":"constrained"}} -->
+<main class="wp-block-group has-white-color has-black-background-color has-text-color has-background" style="padding-top:0;padding-right:0;padding-bottom:0;padding-left:0;margin:0;height:100vh;overflow:hidden;position:fixed;top:0;left:0;width:100vw;z-index:9999;">
+    
+    <!-- wp:html -->
+    <div id="ai-constellation-page" style="margin: 0; padding: 0; height: 100vh; overflow: hidden;">
+        <div id="container" style="position: relative; width: 100vw; height: 100vh;">
+            <div id="canvas-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+            
+            <div id="loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 102; transition: opacity 1s ease-out, transform 1s ease-out;">
+                <div id="data-points-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;"></div>
+                <div id="logo-formation" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2;">
+                    <img id="formation-logo" src="/wp-content/plugins/visiblelight/luna-license-manager/assets/icons/visiblelightailogoonly.svg" alt="Visible Light AI" style="opacity: 0; width: 120px; height: 120px; filter: drop-shadow(0 0 20px #FF8000); animation: logoReveal 1s ease-in-out 3.5s forwards;">
+                </div>
+                <div class="loading-text" style="color: #FF8000; font-size: 1.1rem; font-weight: 600; margin-top: 20px; opacity: 0; animation: fadeInText 2s ease-in-out 3s forwards;">Initializing Supercluster... [UPDATED v2.0]</div>
+            </div>
+
+            <div id="ui-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100;">
+                <div id="header" style="position: absolute; top: 30px; left: 50px; pointer-events: auto; z-index: 101;">
+                    <div class="logo" style="margin-bottom: -10px;">
+                        <img src="/wp-content/plugins/visiblelight/luna-license-manager/assets/icons/visiblelightailogo.svg" alt="Visible Light" style="height: 60px; width: auto; filter: drop-shadow(0 0 10px rgba(255, 128, 0, 0.3)); max-width: 190px;">
+                    </div>
+                    <div class="subtitle" style="font-size: 1rem; color: #FFF4E9; margin-bottom: 5px; font-family: 'HelveticaNowDisplay-Bold', sans-serif;">WebOps Intelligence Supercluster</div>
+                    <div class="tagline" style="font-size: 0.8rem; color: #FFF4E9; font-style: italic; opacity: 0.7; font-family: 'HelveticaNowDisplay-Regular', sans-serif;">Enterprise-Grade AI Constellation</div>
+                    
+                    <!-- Client Selection -->
+                    <div class="client-selector" style="margin-top: 15px;">
+                        <label style="color: #FFF4E9; font-size: 0.8rem; font-family: 'HelveticaNowDisplay-Bold', sans-serif; display: block; margin-bottom: 5px;">Client:</label>
+            <select id="clientSelect" onchange="switchClient()" style="background: #2E2C2A; border: 1px solid #1f1e1c; color: #FFF4E9; padding: 5px 10px; border-radius: 5px; font-size: 0.8rem; font-family: 'HelveticaNowDisplay-Regular', sans-serif;">
+                <option value="loading">Loading VL clients...</option>
+            </select>
+                    </div>
+                </div>
+
+                <div id="controls" style="position: absolute; bottom: 30px; left: 50px; pointer-events: auto; z-index: 101;">
+                    <button class="control-btn" onclick="zoomIn()" title="Zoom In" style="background: #2E2C2A; border: none; color: #FFF4E9; margin: 5px; border-radius: 100px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.3s ease; backdrop-filter: blur(10px); font-family: 'HelveticaNowDisplay-Bold', sans-serif; width: 40px; height: 40px; padding: 10px;">
+                        <img src="/wp-content/plugins/visiblelight/luna-license-manager/assets/icons/plus-solid-full.svg" alt="Zoom In" style="width: 20px; height: 20px; filter: brightness(0) saturate(100%) invert(100%);">
+                    </button>
+                    <button class="control-btn" onclick="zoomOut()" title="Zoom Out" style="background: #2E2C2A; border: none; color: #FFF4E9; margin: 5px; border-radius: 100px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.3s ease; backdrop-filter: blur(10px); font-family: 'HelveticaNowDisplay-Bold', sans-serif; width: 40px; height: 40px; padding: 10px;">
+                        <img src="/wp-content/plugins/visiblelight/luna-license-manager/assets/icons/minus-solid-full.svg" alt="Zoom Out" style="width: 20px; height: 20px; filter: brightness(0) saturate(100%) invert(100%);">
+                    </button>
+                    <button class="control-btn" onclick="resetView()" title="Reset View" style="background: #2E2C2A; border: none; color: #FFF4E9; margin: 5px; border-radius: 100px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.3s ease; backdrop-filter: blur(10px); font-family: 'HelveticaNowDisplay-Bold', sans-serif; width: 40px; height: 40px; padding: 10px;">
+                        <img src="/wp-content/plugins/visiblelight/luna-license-manager/assets/icons/arrows-rotate-reverse-regular-full.svg" alt="Reset View" style="width: 20px; height: 20px; filter: brightness(0) saturate(100%) invert(100%);">
+                    </button>
+                    <button class="control-btn" onclick="toggleConnections()" title="Toggle Connections" id="toggleConnectionsBtn" style="background: #2E2C2A; border: none; color: #FFF4E9; margin: 5px; border-radius: 100px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.3s ease; backdrop-filter: blur(10px); font-family: 'HelveticaNowDisplay-Bold', sans-serif; width: 40px; height: 40px; padding: 10px;">
+                        <img src="/wp-content/plugins/visiblelight/luna-license-manager/assets/icons/eye-regular-full.svg" alt="Toggle Connections" id="toggleConnectionsIcon" style="width: 20px; height: 20px; filter: brightness(0) saturate(100%) invert(100%);">
+                    </button>
+                    <button class="control-btn" onclick="startAnimation()" title="Start Animation" style="background: #2E2C2A; border: none; color: #FFF4E9; margin: 5px; border-radius: 100px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.3s ease; backdrop-filter: blur(10px); font-family: 'HelveticaNowDisplay-Bold', sans-serif; width: 40px; height: 40px; padding: 10px;">
+                        <img src="/wp-content/plugins/visiblelight/luna-license-manager/assets/icons/play-regular-full.svg" alt="Start Animation" style="width: 20px; height: 20px; filter: brightness(0) saturate(100%) invert(100%);">
+                    </button>
+                </div>
+
+                <div id="info-panel" class="minimized" style="position: fixed; top: 0; right: 0; bottom: 0; width: 400px; background: rgba(0, 0, 0, 0.9); border-left: 1px solid #1f1e1c; padding: 20px; backdrop-filter: blur(15px); pointer-events: auto; z-index: 101; opacity: 1; transform: translateX(0); transition: all 0.5s ease; overflow-y: auto;">
+                    <div class="panel-content" style="position: relative; height: 100%;">
+                        <div class="close-btn" onclick="minimizePanel()" style="position: absolute; top: 0px; right: 0px; border: 1px solid #fff4e930; color: #fff4e9; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; transition: all 0.3s ease; z-index: 102;">×</div>
+                        <div class="supercluster-title" style="font-size: 1.6rem; color: #FFF4E9; margin-bottom: 20px; font-weight: 700; text-align: left;">Your Supercluster</div>
+                        <div class="categories-list" id="categories-list">
+                            <!-- Categories will be loaded here -->
+                        </div>
+                    </div>
+                    <div class="supercluster-icon" onclick="expandPanel()" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; cursor: pointer; transition: all 0.3s ease; z-index: 102; display: none;">
+                        <img src="/wp-content/plugins/visiblelight/luna-license-manager/assets/icons/visiblelightailogoonly.svg" alt="Visible Light AI" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 0 8px rgba(255, 128, 0, 0.6));">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /wp:html -->
+
+    <!-- wp:html -->
+    <style>
+        @font-face {
+            font-family: 'HelveticaNowDisplay-Bold';
+            src: url('/wp-content/plugins/visiblelight/luna-license-manager/assets/icons/HelveticaNowDisplay-Bold.ttf') format('truetype');
+            font-weight: bold;
+            font-style: normal;
+        }
+        
+        @font-face {
+            font-family: 'HelveticaNowDisplay-Regular';
+            src: url('/wp-content/plugins/visiblelight/luna-license-manager/assets/icons/HelveticaNowDisplay-Regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        body {
+            background: #000000 !important;
+            font-family: 'HelveticaNowDisplay-Regular', sans-serif;
+            overflow: hidden;
+            color: #ffffff;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        #ai-constellation-page {
+            margin: 0 !important;
+            padding: 0 !important;
+            height: 100vh !important;
+            overflow: hidden !important;
+        }
+
+        .control-btn:hover {
+            background: #3A3836 !important;
+            box-shadow: 0 0 20px rgba(255, 128, 0, 0.4) !important;
+            transform: translateY(-2px) !important;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 128, 0, 0.3) !important;
+            transform: scale(1.1) !important;
+        }
+
+        .show-all-btn {
+            background: #2E2C2A;
+            border: none;
+            color: #fff4e9;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+            margin: 10px 0;
+            display: inline-block;
+            font-family: 'HelveticaNowDisplay-Bold', sans-serif;
+        }
+
+        .show-all-btn:hover {
+            background: rgba(255, 128, 0, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .category-item {
+            background: rgba(255, 128, 0, 0.05);
+            border-left: 4px solid;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .category-item:hover {
+            background: #0F0F0E;
+            transform: translateX(5px);
+        }
+
+        .category-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            font-family: 'HelveticaNowDisplay-Bold', sans-serif;
+            color: #FFF4E9;
+        }
+
+        .category-description {
+            font-size: 0.85rem;
+            color: #FFF4E9;
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+
+        .category-sources {
+            font-size: 0.75rem;
+            color: #FFF4E9;
+        }
+
+        .category-sources strong {
+            color: #FFF4E9;
+            font-family: 'HelveticaNowDisplay-Bold', sans-serif;
+        }
+
+        .galaxy-title {
+            font-size: 1.4rem;
+            color: #FFF4E9;
+            margin-bottom: 10px;
+            font-weight: 700;
+            font-family: 'HelveticaNowDisplay-Bold', sans-serif;
+        }
+
+        .galaxy-description {
+            font-size: 0.9rem;
+            color: #ccc;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .data-sources {
+            font-size: 0.8rem;
+            color: #999;
+        }
+
+        .data-sources strong {
+            color: #fff4e9;
+        }
+
+        #info-panel.minimized {
+            width: 30px !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
+
+        #info-panel.minimized .panel-content {
+            display: none !important;
+        }
+
+        #info-panel.minimized .supercluster-icon {
+            display: block !important;
+        }
+
+        @keyframes dataPointFormation {
+            0% {
+                opacity: 0;
+                transform: scale(0);
+            }
+            20% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            80% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+        }
+
+        @keyframes logoReveal {
+            0% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes fadeInText {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .data-point {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #FF8000;
+            border-radius: 50%;
+            box-shadow: 0 0 6px #FF8000;
+            opacity: 0;
+            animation: dataPointFormation 4s ease-in-out forwards;
+        }
+    </style>
+    <!-- /wp:html -->
+
+    <!-- wp:html -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r158/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <!-- WordPress API Scripts -->
+    <script>
+        // WordPress API settings - will be set dynamically
+        window.wpApiSettings = {
+            root: '/wp-json/',
+            nonce: ''
+        };
+        
+        // Try to get nonce from WordPress
+        fetch('/wp-json/wp/v2/users/me')
+            .then(response => {
+                if (response.ok) {
+                    // User is logged in, try to get nonce
+                    return fetch('/wp-json/wp/v2/');
+                }
+                throw new Error('Not logged in');
+            })
+            .then(response => {
+                const nonce = response.headers.get('X-WP-Nonce');
+                if (nonce) {
+                    window.wpApiSettings.nonce = nonce;
+                    console.log('WordPress nonce obtained');
+                }
+            })
+            .catch(error => {
+                console.log('WordPress authentication not available:', error.message);
+            });
+    </script>
+    <script>
+        // Fallback CDN sources
+        if (typeof THREE === 'undefined') {
+            console.log('Primary CDN failed, trying fallback...');
+            const script1 = document.createElement('script');
+            script1.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r158/three.min.js';
+            script1.onload = function() {
+                console.log('Fallback CDN 1 loaded successfully');
+                loadOrbitControls();
+            };
+            script1.onerror = function() {
+                console.log('Fallback CDN 1 failed, trying final fallback...');
+                const script2 = document.createElement('script');
+                script2.src = 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js';
+                script2.onload = function() {
+                    console.log('Fallback CDN 2 loaded successfully');
+                    loadOrbitControls();
+                };
+                script2.onerror = function() {
+                    console.error('All CDN sources failed');
+                    showError('Failed to load Three.js from all CDN sources. Please check your internet connection.');
+                };
+                document.head.appendChild(script2);
+            };
+            document.head.appendChild(script1);
+        } else {
+            loadOrbitControls();
+        }
+
+        function loadOrbitControls() {
+            if (typeof THREE !== 'undefined' && !THREE.OrbitControls) {
+                const orbitScript = document.createElement('script');
+                orbitScript.src = 'https://unpkg.com/three@0.158.0/examples/js/controls/OrbitControls.js';
+                orbitScript.onload = function() {
+                    console.log('OrbitControls loaded successfully');
+                    initSupercluster();
+                };
+                orbitScript.onerror = function() {
+                    console.log('OrbitControls failed, using basic controls');
+                    initSupercluster();
+                };
+                document.head.appendChild(orbitScript);
+            } else {
+                initSupercluster();
+            }
+        }
+
+        function showError(message) {
+            const loadingElement = document.getElementById('loading');
+            if (loadingElement) {
+                loadingElement.innerHTML = `<div style="color: #ff6b6b; font-size: 1.2rem; text-align: center;">${message}</div>`;
+            }
+        }
+    </script>
+
+    <script>
+        // Client-specific configuration
+        const CLIENT_ID = 'current_user';
+        const REST_URL = 'https://hub.visiblelight.ai/wp-json/vl-hub/v1/constellation';
+        const ICONS_URL = '/wp-content/plugins/visiblelight/luna-license-manager/assets/icons';
+        
+        // Version identifier for debugging
+        console.log('🚀 Supercluster Template v2.0 - Updated with real VL clients only');
+        
+        // Client selection logic
+        function getClientData() {
+            // Get client ID from URL parameter or current user
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlClientId = urlParams.get('client');
+            
+            // Use URL parameter if provided, otherwise use 'current'
+            const selectedClientId = urlClientId || 'current';
+            
+            console.log('Selected Client ID:', selectedClientId);
+            return selectedClientId;
+        }
+        
+        // Get the actual client ID
+        const ACTIVE_CLIENT_ID = getClientData();
+        
+        // Load clients from WordPress database
+        function loadClients() {
+            console.log('🚀 Starting to load clients...');
+            
+            // Get nonce from WordPress - try multiple methods
+            let nonce = '';
+            
+            // Method 1: wpApiSettings
+            if (typeof wpApiSettings !== 'undefined' && wpApiSettings.nonce) {
+                nonce = wpApiSettings.nonce;
+                console.log('✅ Nonce from wpApiSettings:', nonce ? 'Yes' : 'No');
+            }
+            
+            // Method 2: Meta tag
+            if (!nonce) {
+                const nonceMeta = document.querySelector('meta[name="wp-nonce"]');
+                if (nonceMeta) {
+                    nonce = nonceMeta.getAttribute('content');
+                    console.log('✅ Nonce from meta tag:', nonce ? 'Yes' : 'No');
+                }
+            }
+            
+            // Method 3: Try to get nonce from REST API
+            if (!nonce) {
+                console.log('🔍 Attempting to get nonce from REST API...');
+                fetch('/wp-json/wp/v2/', {
+                    method: 'GET',
+                    credentials: 'same-origin'
+                })
+                .then(response => {
+                    const nonceHeader = response.headers.get('X-WP-Nonce');
+                    if (nonceHeader) {
+                        nonce = nonceHeader;
+                        console.log('✅ Nonce from REST API:', nonce ? 'Yes' : 'No');
+                    } else {
+                        console.log('⚠️ No nonce found in REST API response');
+                    }
+                    
+                    // Make API call with whatever nonce we have
+                    loadClientsWithNonce(nonce);
+                })
+                .catch(error => {
+                    console.log('❌ Failed to get nonce from REST API:', error);
+                    loadClientsWithNonce('');
+                });
+                return;
+            }
+            
+            // Make API request with nonce
+            loadClientsWithNonce(nonce);
+        }
+        
+        // Separate function to make API call with nonce
+        function loadClientsWithNonce(nonce) {
+            console.log('🔑 Making API call with nonce:', nonce ? 'Yes' : 'No');
+            
+            // Prepare headers
+            const headers = {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            };
+            
+            // Add nonce if available
+            if (nonce) {
+                headers['X-WP-Nonce'] = nonce;
+            }
+            
+            // Make API request
+            fetch('/wp-json/vl-hub/v1/clients', {
+                method: 'GET',
+                headers: headers,
+                credentials: 'same-origin'
+            })
+                .then(response => {
+                    console.log('📡 API Response Status:', response.status);
+                    console.log('📡 API Response Headers:', response.headers);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('📊 API Response Data:', data);
+                    
+                    const clientSelect = document.getElementById('clientSelect');
+                    clientSelect.innerHTML = ''; // Clear loading state
+                    
+                    if (data && data.clients && data.clients.length > 0) {
+                        data.clients.forEach(client => {
+                            const option = document.createElement('option');
+                            option.value = client.license_key;
+                            option.textContent = client.client_name;
+                            clientSelect.appendChild(option);
+                        });
+                        console.log('✅ Successfully loaded', data.clients.length, 'real VL clients from API');
+                        console.log('🎯 VL Client names:', data.clients.map(c => c.client_name).join(', '));
+                    } else {
+                        throw new Error('No VL clients data received from API');
+                    }
+                    
+                    // Set current selection based on URL parameter
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const currentClient = urlParams.get('client');
+                    if (currentClient) {
+                        clientSelect.value = currentClient;
+                        console.log('🎯 Set current VL client to:', currentClient);
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ API call failed:', error);
+                    console.log('🚫 No fallback - only real VL clients will be shown');
+                    
+                    // Show error message instead of fallback
+                    const clientSelect = document.getElementById('clientSelect');
+                    clientSelect.innerHTML = '<option value="error">Failed to load VL clients</option>';
+                    
+                    console.log('⚠️ VL Client loading failed. Check API endpoint and authentication.');
+                });
+        }
+        
+        // Client switching function
+        function switchClient() {
+            const clientSelect = document.getElementById('clientSelect');
+            const selectedClient = clientSelect.value;
+            
+            if (selectedClient === 'current') {
+                // Reload page without client parameter
+                window.location.href = window.location.pathname;
+            } else {
+                // Reload page with client parameter
+                window.location.href = window.location.pathname + '?client=' + selectedClient;
+            }
+        }
+        
+        // Galaxy data structure with new color palette and spread positions
+        const galaxyData = {
+            'infrastructure': {
+                title: 'Website Infrastructure & Performance',
+                description: 'Real-time monitoring of site health, performance, and reliability across all digital properties.',
+                sources: 'PageSpeed Insights, Uptime monitoring, Server logs, CDN metrics, Core Web Vitals, SSL/TLS data',
+                color: '#2B6AFF',
+                gradient: ['#2B6AFF', '#1A4ACC', '#3C7AFF'],
+                position: { x: -12, y: 4, z: -8 }
+            },
+            'content': {
+                title: 'Content Management & Structure',
+                description: 'Intelligent content analysis and optimization for SEO, engagement, and conversion optimization.',
+                sources: 'WordPress REST API, Content metadata, Internal link graph, Structured data, Media assets',
+                color: '#D62A42',
+                gradient: ['#D62A42', '#B01E35', '#F03A52'],
+                position: { x: -3, y: 9, z: 5 }
+            },
+            'search': {
+                title: 'Search Engine Intelligence',
+                description: 'Comprehensive SEO intelligence and search performance optimization across all search platforms.',
+                sources: 'Google Search Console, Keyword rankings, Crawl logs, Backlink intelligence, Sitemap health',
+                color: '#F4C542',
+                gradient: ['#F4C542', '#D4A535', '#FFD54F'],
+                position: { x: 7, y: 11, z: -3 }
+            },
+            'analytics': {
+                title: 'Analytics & Engagement',
+                description: 'Deep user behavior analysis and engagement metrics to drive conversion optimization.',
+                sources: 'Google Analytics 4, Session data, Funnel progression, Event tracking, Demographics',
+                color: '#1AC6A9',
+                gradient: ['#1AC6A9', '#15A08A', '#2FE6C8'],
+                position: { x: 11, y: 2, z: 7 }
+            },
+            'marketing': {
+                title: 'Marketing & Campaign Data',
+                description: 'Unified marketing intelligence across all channels and campaign performance optimization.',
+                sources: 'Google Ads, Meta Ads, CRM data, Email marketing, Attribution data, ROI metrics',
+                color: '#7D5DFB',
+                gradient: ['#7D5DFB', '#6B4DE8', '#8F6DFC'],
+                position: { x: 8, y: -7, z: -9 }
+            },
+            'ecommerce': {
+                title: 'E-Commerce & Conversion Data',
+                description: 'Revenue intelligence and conversion optimization across all e-commerce touchpoints.',
+                sources: 'WooCommerce, Shopify, Orders data, Cart analytics, Product inventory, A/B testing',
+                color: '#C8913D',
+                gradient: ['#C8913D', '#B07A2A', '#E0A250'],
+                position: { x: -5, y: -9, z: 4 }
+            },
+            'security': {
+                title: 'Security & Compliance Data',
+                description: 'Enterprise-grade security monitoring and compliance management across all systems.',
+                sources: 'Security logs, Vulnerability reports, GDPR compliance, Access logs, SSL inspection',
+                color: '#4B5A75',
+                gradient: ['#4B5A75', '#3A4759', '#5C6D91'],
+                position: { x: 3, y: -11, z: 2 }
+            },
+            'cloudops': {
+                title: 'CloudOps & Infrastructure Metrics',
+                description: 'Cloud infrastructure intelligence and automated scaling across all hosting environments.',
+                sources: 'AWS/GCP/Azure, Docker/Kubernetes, API performance, Database metrics, Microservices',
+                color: '#FFF4E9',
+                gradient: ['#FFF4E9', '#E6D4C7', '#FFFFFF'],
+                position: { x: -9, y: -2, z: 9 }
+            },
+            'identity': {
+                title: 'User & Identity Layer',
+                description: 'User intelligence and personalized experience optimization across all touchpoints.',
+                sources: 'Auth0, CRM records, License management, User roles, Behavior analytics',
+                color: '#E28AAE',
+                gradient: ['#E28AAE', '#D16A9A', '#F3AAC2'],
+                position: { x: -14, y: -8, z: -1 }
+            },
+            'competitive': {
+                title: 'Competitive & Market Data',
+                description: 'Market intelligence and competitive positioning across the digital landscape.',
+                sources: 'Competitor data, Market trends, Industry benchmarks, SERP analysis, Social listening',
+                color: '#565B6F',
+                gradient: ['#565B6F', '#444A5B', '#686C83'],
+                position: { x: 6, y: -5, z: -12 }
+            }
+        };
+
+        let scene, camera, renderer, controls;
+        let galaxies = {};
+        let connections = [];
+        let animationId;
+        let showConnections = true;
+        let isAnimating = false;
+        let isDragging = false;
+
+        function createDataPointsAnimation() {
+            const container = document.getElementById('data-points-container');
+            const logo = document.getElementById('formation-logo');
+            const logoRect = logo.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            
+            // Calculate logo center position relative to container
+            const logoCenterX = logoRect.left - containerRect.left + logoRect.width / 2;
+            const logoCenterY = logoRect.top - containerRect.top + logoRect.height / 2;
+            
+            // Create 2000 data points scattered across the screen
+            for (let i = 0; i < 2000; i++) {
+                const dataPoint = document.createElement('div');
+                dataPoint.className = 'data-point';
+                
+                // Random starting position across the screen
+                const startX = Math.random() * window.innerWidth;
+                const startY = Math.random() * window.innerHeight;
+                
+                dataPoint.style.left = startX + 'px';
+                dataPoint.style.top = startY + 'px';
+                
+                // Calculate delay for staggered animation
+                const delay = Math.random() * 2; // 0-2 seconds
+                dataPoint.style.animationDelay = delay + 's';
+                
+                // Add slight color variation
+                const hue = 30 + Math.random() * 20; // Orange to yellow range
+                const saturation = 80 + Math.random() * 20;
+                const lightness = 50 + Math.random() * 20;
+                dataPoint.style.background = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                dataPoint.style.boxShadow = `0 0 6px hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                
+                container.appendChild(dataPoint);
+                
+                // Animate towards logo center
+                setTimeout(() => {
+                    dataPoint.style.transition = 'all 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    dataPoint.style.left = logoCenterX + 'px';
+                    dataPoint.style.top = logoCenterY + 'px';
+                    dataPoint.style.transform = 'scale(0)';
+                }, delay * 1000 + 1000);
+            }
+        }
+
+        function init() {
+            try {
+                // Check if Three.js loaded
+                if (typeof THREE === 'undefined') {
+                    throw new Error('Three.js failed to load');
+                }
+
+                // Create scene
+                scene = new THREE.Scene();
+                scene.fog = new THREE.Fog(0x000000, 50, 200);
+
+                // Create camera
+                camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                camera.position.set(0, 0, 35);
+
+                // Create renderer
+                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setClearColor(0x000000, 1);
+                renderer.shadowMap.enabled = true;
+                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+                document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+                // Add controls with fallback
+                if (THREE.OrbitControls) {
+                    controls = new THREE.OrbitControls(camera, renderer.domElement);
+                    controls.enableDamping = true;
+                    controls.dampingFactor = 0.05;
+                    controls.maxDistance = 50;
+                    controls.minDistance = 10;
+                    
+                    // Track dragging state for OrbitControls
+                    controls.addEventListener('start', () => isDragging = true);
+                    controls.addEventListener('end', () => isDragging = false);
+                } else {
+                    console.warn('OrbitControls not available, using basic camera controls');
+                    // Basic mouse controls fallback
+                    let mouseX = 0, mouseY = 0;
+                    let isMouseDown = false;
+                    
+                    renderer.domElement.addEventListener('mousedown', () => {
+                        isMouseDown = true;
+                        isDragging = true;
+                    });
+                    renderer.domElement.addEventListener('mouseup', () => {
+                        isMouseDown = false;
+                        isDragging = false;
+                    });
+                    renderer.domElement.addEventListener('mousemove', (event) => {
+                        if (isMouseDown) {
+                            mouseX += event.movementX * 0.01;
+                            mouseY += event.movementY * 0.01;
+                            camera.position.x = Math.sin(mouseX) * 25;
+                            camera.position.z = Math.cos(mouseX) * 25;
+                            camera.position.y = mouseY * 10;
+                            camera.lookAt(0, 0, 0);
+                        }
+                    });
+                }
+
+                // Create star field
+                console.log('Creating star field...');
+                createStarField();
+                
+                // Create galaxies
+                console.log('Creating galaxies...');
+                createGalaxies();
+                console.log('Galaxies created:', Object.keys(galaxies).length);
+                
+                // Create connections
+                console.log('Creating connections...');
+                createConnections();
+
+                // Add lighting
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.3);
+                scene.add(ambientLight);
+
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(10, 10, 5);
+                directionalLight.castShadow = true;
+                scene.add(directionalLight);
+
+                // Add click event listener after renderer is created
+                renderer.domElement.addEventListener('click', onMouseClick);
+
+                // Start render loop
+                animate();
+
+                // Start data points animation immediately
+                createDataPointsAnimation();
+                
+                // Hide loading screen after animation completes - panel starts minimized
+                setTimeout(() => {
+                    const loadingElement = document.getElementById('loading');
+                    loadingElement.classList.add('fade-out');
+                    
+                    setTimeout(() => {
+                        loadingElement.style.display = 'none';
+                        loadAllCategories();
+                        // Position camera for minimized panel view - centered
+                        camera.position.set(0, 0, 35);
+                    }, 1000); // Wait for fade transition
+                }, 5000); // Extended to 5 seconds for full animation
+
+            } catch (error) {
+                console.error('Error initializing Supercluster:', error);
+                document.getElementById('loading').innerHTML = 
+                    '<div style="color: #ff6b6b; font-size: 1.2rem;">Error loading visualization. Please check console for details.</div>';
+            }
+        }
+
+        function createStarField() {
+            const starGeometry = new THREE.BufferGeometry();
+            const starCount = 2000;
+            const positions = new Float32Array(starCount * 3);
+
+            for (let i = 0; i < starCount * 3; i++) {
+                positions[i] = (Math.random() - 0.5) * 200;
+            }
+
+            starGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            const starMaterial = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 0.2,
+                transparent: true,
+                opacity: 0.3
+            });
+
+            const stars = new THREE.Points(starGeometry, starMaterial);
+            scene.add(stars);
+        }
+
+        function createGalaxies() {
+            console.log('Starting galaxy creation...');
+            Object.keys(galaxyData).forEach((key, index) => {
+                try {
+                    const data = galaxyData[key];
+                    console.log(`Creating galaxy ${key} at position:`, data.position);
+                    
+                    // Create galaxy group
+                    const galaxyGroup = new THREE.Group();
+                    
+                    // Create bright central core
+                    const coreGeometry = new THREE.SphereGeometry(0.8, 32, 32);
+                    const coreMaterial = new THREE.MeshPhongMaterial({
+                        color: data.color,
+                        emissive: data.color,
+                        emissiveIntensity: 0.8,
+                        transparent: true,
+                        opacity: 0.9,
+                        shininess: 100
+                    });
+                    const core = new THREE.Mesh(coreGeometry, coreMaterial);
+                    core.castShadow = true;
+                    core.receiveShadow = true;
+                    core.userData = { type: 'galaxy', key: key, data: data };
+                    galaxyGroup.add(core);
+
+                    // Create inner glow
+                    const innerGlowGeometry = new THREE.SphereGeometry(1.2, 32, 32);
+                    const innerGlowMaterial = new THREE.MeshBasicMaterial({
+                        color: data.color,
+                        transparent: true,
+                        opacity: 0.4,
+                        side: THREE.BackSide
+                    });
+                    const innerGlow = new THREE.Mesh(innerGlowGeometry, innerGlowMaterial);
+                    innerGlow.userData = { type: 'galaxy', key: key, data: data };
+                    galaxyGroup.add(innerGlow);
+
+                    // Create particle halo for natural galaxy feel
+                    const particleCount = 200;
+                    const particleGeometry = new THREE.BufferGeometry();
+                    const particlePositions = new Float32Array(particleCount * 3);
+                    const particleColors = new Float32Array(particleCount * 3);
+                    const particleSizes = new Float32Array(particleCount);
+
+                    for (let i = 0; i < particleCount; i++) {
+                        // Create spiral distribution
+                        const angle = (i / particleCount) * Math.PI * 4 + Math.random() * 0.5;
+                        const radius = 1.5 + Math.random() * 3;
+                        const height = (Math.random() - 0.5) * 0.8;
+                        
+                        particlePositions[i * 3] = Math.cos(angle) * radius;
+                        particlePositions[i * 3 + 1] = height;
+                        particlePositions[i * 3 + 2] = Math.sin(angle) * radius;
+
+                        // Use gradient colors with brightness multiplier
+                        const colorIndex = Math.floor(Math.random() * data.gradient.length);
+                        const color = new THREE.Color(data.gradient[colorIndex]);
+                        color.multiplyScalar(1.5); // Brighten the particles
+                        
+                        particleColors[i * 3] = color.r;
+                        particleColors[i * 3 + 1] = color.g;
+                        particleColors[i * 3 + 2] = color.b;
+
+                        particleSizes[i] = 0.03 + Math.random() * 0.08;
+                    }
+
+                    particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+                    particleGeometry.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
+                    particleGeometry.setAttribute('size', new THREE.BufferAttribute(particleSizes, 1));
+
+                    const particleMaterial = new THREE.PointsMaterial({
+                        size: 0.08,
+                        vertexColors: true,
+                        transparent: true,
+                        opacity: 0.8,
+                        sizeAttenuation: true,
+                        blending: THREE.AdditiveBlending
+                    });
+
+                    const particles = new THREE.Points(particleGeometry, particleMaterial);
+                    particles.userData = { type: 'galaxy', key: key, data: data };
+                    galaxyGroup.add(particles);
+
+                    // Create outer glow
+                    const outerGlowGeometry = new THREE.SphereGeometry(3, 32, 32);
+                    const outerGlowMaterial = new THREE.MeshBasicMaterial({
+                        color: data.gradient[1],
+                        transparent: true,
+                        opacity: 0.1,
+                        side: THREE.BackSide
+                    });
+                    const outerGlow = new THREE.Mesh(outerGlowGeometry, outerGlowMaterial);
+                    galaxyGroup.add(outerGlow);
+
+                    // Create clickable sphere
+                    const clickableGeometry = new THREE.SphereGeometry(3, 16, 16);
+                    const clickableMaterial = new THREE.MeshBasicMaterial({
+                        transparent: true,
+                        opacity: 0
+                    });
+                    const clickableSphere = new THREE.Mesh(clickableGeometry, clickableMaterial);
+                    clickableSphere.userData = { type: 'galaxy', key: key, data: data };
+                    galaxyGroup.add(clickableSphere);
+
+                    // Position galaxy
+                    galaxyGroup.position.set(data.position.x, data.position.y, data.position.z);
+                    galaxyGroup.userData = { type: 'galaxy', key: key, data: data };
+
+                    // Add click interaction to all children
+                    galaxyGroup.children.forEach(child => {
+                        child.userData = { type: 'galaxy', key: key, data: data };
+                    });
+
+                    scene.add(galaxyGroup);
+                    galaxies[key] = galaxyGroup;
+                    console.log(`Galaxy ${key} created successfully`);
+                } catch (error) {
+                    console.error(`Error creating galaxy ${key}:`, error);
+                }
+            });
+            console.log('Galaxy creation complete');
+        }
+
+        function createConnections() {
+            console.log('Creating connections between galaxies...');
+            
+            // Clear existing connections
+            connections.forEach(connection => {
+                scene.remove(connection);
+            });
+            connections = [];
+            
+            const connectionGeometry = new THREE.BufferGeometry();
+            const positions = [];
+            const colors = [];
+
+            // Use the precise data positions - these are exactly where the cores are positioned
+            Object.keys(galaxyData).forEach(key1 => {
+                Object.keys(galaxyData).forEach(key2 => {
+                    if (key1 !== key2) {
+                        const pos1 = galaxyData[key1].position;
+                        const pos2 = galaxyData[key2].position;
+                        
+                        // Calculate distance between core centers using data positions
+                        const distance = Math.sqrt(
+                            Math.pow(pos1.x - pos2.x, 2) + 
+                            Math.pow(pos1.y - pos2.y, 2) + 
+                            Math.pow(pos1.z - pos2.z, 2)
+                        );
+                        
+                        if (distance < 15) { // Only connect nearby galaxies
+                            console.log(`Connecting ${key1} to ${key2}, distance: ${distance.toFixed(2)}`);
+                            // Use the exact data positions - these are where the cores are
+                            positions.push(pos1.x, pos1.y, pos1.z);
+                            positions.push(pos2.x, pos2.y, pos2.z);
+
+                            const color1 = new THREE.Color(galaxyData[key1].color);
+                            const color2 = new THREE.Color(galaxyData[key2].color);
+                            
+                            colors.push(color1.r * 0.3, color1.g * 0.3, color1.b * 0.3);
+                            colors.push(color2.r * 0.3, color2.g * 0.3, color2.b * 0.3);
+                        }
+                    }
+                });
+            });
+
+            console.log(`Created ${positions.length / 6} connection lines`);
+            connectionGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            connectionGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+            const connectionMaterial = new THREE.LineBasicMaterial({
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.3 // More visible
+            });
+
+            const connectionLines = new THREE.LineSegments(connectionGeometry, connectionMaterial);
+            connectionLines.userData = { type: 'connections' };
+            scene.add(connectionLines);
+            connections.push(connectionLines);
+            console.log('Connections created successfully');
+        }
+
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+
+            // Rotate galaxies with differential rotation (like real galaxies)
+            Object.keys(galaxies).forEach(key => {
+                const galaxy = galaxies[key];
+                galaxy.rotation.y += 0.001;
+                
+                // Rotate particles in opposite direction for more realistic effect
+                galaxy.children.forEach(child => {
+                    if (child.type === 'Points') {
+                        child.rotation.y -= 0.002;
+                    }
+                });
+            });
+
+            // Animate connections if enabled
+            if (isAnimating) {
+                connections.forEach(connection => {
+                    connection.rotation.y += 0.0005;
+                });
+            }
+
+            // Update controls
+            if (controls && controls.update) {
+                controls.update();
+            }
+            
+            renderer.render(scene, camera);
+        }
+
+        // Event listeners
+        function onMouseClick(event) {
+            // Don't select galaxies if user is dragging/rotating the view
+            if (isDragging) {
+                return;
+            }
+            
+            const mouse = new THREE.Vector2();
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+
+            const intersects = raycaster.intersectObjects(scene.children, true);
+            
+            if (intersects.length > 0) {
+                const object = intersects[0].object;
+                if (object.userData && object.userData.type === 'galaxy') {
+                    showGalaxyInfo(object.userData.key);
+                }
+            }
+        }
+
+        function showGalaxyInfo(key) {
+            const data = galaxyData[key];
+            const panel = document.getElementById('info-panel');
+            const panelContent = panel.querySelector('.panel-content');
+            panelContent.innerHTML = `
+                <div class="close-btn" onclick="minimizePanel()">×</div>
+                <div class="galaxy-title">${data.title}</div>
+                <div class="galaxy-description">${data.description}</div>
+                <div class="data-sources"><strong>Data Sources:</strong> ${data.sources}</div>
+                <div class="show-all-btn" onclick="showAllCategories()">Show All Categories</div>
+            `;
+            panel.classList.remove('minimized');
+        }
+
+        function loadAllCategories() {
+            const categoriesList = document.getElementById('categories-list');
+            categoriesList.innerHTML = Object.keys(galaxyData).map(key => {
+                const data = galaxyData[key];
+                return `
+                    <div class="category-item" style="border-left-color: ${data.color}30;" onclick="showGalaxyInfo('${key}')">
+                        <div class="category-title">${data.title}</div>
+                        <div class="category-description">${data.description}</div>
+                        <div class="category-sources"><strong>Data Sources:</strong> ${data.sources}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showAllCategories() {
+            const panel = document.getElementById('info-panel');
+            const panelContent = panel.querySelector('.panel-content');
+            panelContent.innerHTML = `
+                <div class="close-btn" onclick="minimizePanel()">×</div>
+                <div class="supercluster-title">Your Supercluster</div>
+                <div class="categories-list">
+                    ${Object.keys(galaxyData).map(key => {
+                        const data = galaxyData[key];
+                        return `
+                            <div class="category-item" style="border-left-color: ${data.color}30;" onclick="showGalaxyInfo('${key}')">
+                                <div class="category-title">${data.title}</div>
+                                <div class="category-description">${data.description}</div>
+                                <div class="category-sources"><strong>Data Sources:</strong> ${data.sources}</div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+            panel.classList.remove('minimized');
+        }
+
+        function minimizePanel() {
+            const panel = document.getElementById('info-panel');
+            panel.classList.add('minimized');
+            // Reposition camera when panel is minimized - center the supercluster
+            camera.position.set(0, 0, 35);
+            if (controls && controls.reset) {
+                controls.reset();
+            }
+        }
+
+        function expandPanel() {
+            const panel = document.getElementById('info-panel');
+            panel.classList.remove('minimized');
+            // Reposition camera when panel is expanded - move left by 5vw equivalent
+            camera.position.set(-12, 0, 35);
+            if (controls && controls.reset) {
+                controls.reset();
+            }
+        }
+
+        // Control functions
+        function resetView() {
+            camera.position.set(0, 0, 35);
+            if (controls && controls.reset) {
+                controls.reset();
+            }
+        }
+
+        function zoomIn() {
+            const currentDistance = camera.position.length();
+            const newDistance = Math.max(currentDistance * 0.8, 15); // Don't zoom in too close
+            const direction = camera.position.clone().normalize();
+            camera.position.copy(direction.multiplyScalar(newDistance));
+            if (controls && controls.update) {
+                controls.update();
+            }
+        }
+
+        function zoomOut() {
+            const currentDistance = camera.position.length();
+            const newDistance = Math.min(currentDistance * 1.2, 60); // Don't zoom out too far
+            const direction = camera.position.clone().normalize();
+            camera.position.copy(direction.multiplyScalar(newDistance));
+            if (controls && controls.update) {
+                controls.update();
+            }
+        }
+
+        function toggleConnections() {
+            showConnections = !showConnections;
+            connections.forEach(connection => {
+                connection.visible = showConnections;
+            });
+            
+            // Update the icon based on connection visibility
+            const icon = document.getElementById('toggleConnectionsIcon');
+            if (showConnections) {
+                icon.src = ICONS_URL + '/eye-regular-full.svg';
+                icon.alt = 'Hide Connections';
+            } else {
+                icon.src = ICONS_URL + '/eye-slash-light-full.svg';
+                icon.alt = 'Show Connections';
+            }
+        }
+
+        function startAnimation() {
+            isAnimating = !isAnimating;
+        }
+
+        // Event listeners
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Initialize the supercluster
+        function initSupercluster() {
+            console.log('Initializing Supercluster...');
+            if (typeof THREE !== 'undefined') {
+                console.log('Three.js loaded successfully');
+                init();
+            } else {
+                console.error('Three.js failed to load');
+                showError('Failed to load Three.js library. Please check your internet connection.');
+            }
+        }
+
+        // Client authentication and data loading
+        function checkClientAccess() {
+            // For now, allow access - authentication is handled by the API
+            console.log('Client access check passed');
+            return true;
+        }
+        
+        // Load client-specific data
+        function loadClientData() {
+            console.log('Loading data for client:', ACTIVE_CLIENT_ID);
+            
+            // Map license keys to client names for better logging
+            const clientMap = {
+                'VL-VYAK-9BPQ-NKCC': 'Commonwealth Health Services',
+                'VL-H2K3-ZFQK-DKDC': 'Site Assembly',
+                'VL-AWJJ-8J6S-GD6R': 'Visible Light'
+            };
+            
+            const clientName = clientMap[ACTIVE_CLIENT_ID] || 'Current User';
+            console.log('Loading data for:', clientName);
+            
+            // Here you would fetch client-specific data from your API
+            // For now, we'll use the default galaxy data
+            // You can modify this to load different data based on the client
+            
+            // Example: Load different galaxy configurations per client
+            if (ACTIVE_CLIENT_ID === 'VL-VYAK-9BPQ-NKCC') {
+                // Commonwealth Health Services specific configuration
+                console.log('Loading Commonwealth Health Services configuration');
+            } else if (ACTIVE_CLIENT_ID === 'VL-H2K3-ZFQK-DKDC') {
+                // Site Assembly specific configuration
+                console.log('Loading Site Assembly configuration');
+            } else if (ACTIVE_CLIENT_ID === 'VL-AWJJ-8J6S-GD6R') {
+                // Visible Light specific configuration
+                console.log('Loading Visible Light configuration');
+            } else {
+                // Default configuration
+                console.log('Loading default configuration');
+            }
+        }
+        
+        // Check if user is logged in and get their client data
+        function checkAuthentication() {
+            console.log('🔍 Starting authentication check...');
+            
+            // Try to make a simple API call to check authentication
+            fetch('/wp-json/wp/v2/users/me', {
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                console.log('📡 Authentication response status:', response.status);
+                if (response.ok) {
+                    console.log('✅ User is authenticated');
+                    return response.json();
+                } else {
+                    console.log('❌ Authentication failed with status:', response.status);
+                    throw new Error('Not authenticated');
+                }
+            })
+            .then(userData => {
+                console.log('👤 User data received:', userData);
+                // Get user's VL license key from meta
+                loadUserClientData(userData.id);
+            })
+            .catch(error => {
+                console.log('❌ Authentication check failed:', error);
+                console.log('🔄 Redirecting to login page...');
+                window.location.href = '/supercluster-login/';
+            });
+        }
+        
+        // Load client-specific data based on user's VL license key
+        function loadUserClientData(userId) {
+            console.log('🔍 Loading user client data for user ID:', userId);
+            
+            // Get user meta to find their VL license key
+            fetch(`/wp-json/wp/v2/users/${userId}`, {
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                console.log('📡 User data response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch user data: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(userData => {
+                console.log('👤 Basic user data:', userData);
+                
+                // Try to get user meta data with edit context
+                return fetch(`/wp-json/wp/v2/users/${userId}?context=edit`, {
+                    credentials: 'same-origin'
+                });
+            })
+            .then(response => {
+                console.log('📡 User meta response status:', response.status);
+                if (!response.ok) {
+                    console.log('⚠️ Could not fetch user meta, using basic user data');
+                    // Return the basic user data if meta fetch fails
+                    return { meta: {} };
+                }
+                return response.json();
+            })
+            .then(userData => {
+                console.log('🔑 User meta data:', userData);
+                
+                // Find VL license key in meta
+                const vlLicenseKey = userData.meta?.vl_license_key || userData.vl_license_key;
+                const clientName = userData.meta?.vl_client_name || userData.vl_client_name;
+                
+                if (vlLicenseKey) {
+                    console.log('🎯 Found VL License Key:', vlLicenseKey);
+                    console.log('🏢 Client Name:', clientName);
+                    
+                    // Update UI to show client-specific view
+                    updateClientUI(clientName, vlLicenseKey);
+                    
+                    // Load client-specific data
+                    loadClientSpecificData(vlLicenseKey, clientName);
+                    createDataPointsAnimation();
+                } else {
+                    console.log('❌ No VL license key found for user, showing general view');
+                    // Fallback to general view - DON'T redirect
+                    loadClients();
+                    loadClientData();
+                    createDataPointsAnimation();
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error loading user client data:', error);
+                console.log('🔄 Falling back to general view');
+                // Fallback to general view - DON'T redirect
+                loadClients();
+                loadClientData();
+                createDataPointsAnimation();
+            });
+        }
+        
+        // Update UI to show client-specific information
+        function updateClientUI(clientName, licenseKey) {
+            // Update header to show client name
+            const subtitle = document.querySelector('.subtitle');
+            if (subtitle) {
+                subtitle.textContent = `${clientName} - WebOps Intelligence Supercluster`;
+            }
+            
+            // Hide client selector since this is client-specific
+            const clientSelector = document.querySelector('.client-selector');
+            if (clientSelector) {
+                clientSelector.style.display = 'none';
+            }
+            
+            // Update info panel title
+            const superclusterTitle = document.querySelector('.supercluster-title');
+            if (superclusterTitle) {
+                superclusterTitle.textContent = `${clientName} Supercluster`;
+            }
+            
+            console.log(`🎨 Updated UI for client: ${clientName}`);
+        }
+        
+        // Load client-specific data based on license key
+        function loadClientSpecificData(licenseKey, clientName) {
+            console.log(`📊 Loading data for client: ${clientName} (${licenseKey})`);
+            
+            // Map license keys to specific client configurations
+            const clientConfigs = {
+                'lic_3d2c5795-b6c2-482f-8cb9-cf36603768e8': {
+                    name: 'Commonwealth Health Services',
+                    color: '#2B6AFF',
+                    focus: ['infrastructure', 'security', 'analytics', 'identity']
+                },
+                'lic_68712354-ee80-4eb9-94d7-1a1f6404bb80': {
+                    name: 'Site Assembly',
+                    color: '#D62A42',
+                    focus: ['content', 'search', 'marketing', 'ecommerce']
+                },
+                'lic_ce0a7680-26eb-484b-ac1a-bb075d944322': {
+                    name: 'Visible Light',
+                    color: '#F4C542',
+                    focus: ['cloudops', 'competitive', 'analytics', 'infrastructure']
+                }
+            };
+            
+            const clientConfig = clientConfigs[licenseKey];
+            if (clientConfig) {
+                console.log(`🎯 Using client config for ${clientConfig.name}`);
+                
+                // Filter galaxy data to show only relevant categories
+                const filteredGalaxyData = {};
+                clientConfig.focus.forEach(key => {
+                    if (galaxyData[key]) {
+                        filteredGalaxyData[key] = {
+                            ...galaxyData[key],
+                            color: clientConfig.color,
+                            gradient: [clientConfig.color, adjustColor(clientConfig.color, -20), adjustColor(clientConfig.color, 20)]
+                        };
+                    }
+                });
+                
+                // Update global galaxy data
+                Object.keys(galaxyData).forEach(key => {
+                    if (filteredGalaxyData[key]) {
+                        galaxyData[key] = filteredGalaxyData[key];
+                    } else {
+                        // Dim out non-relevant galaxies
+                        galaxyData[key] = {
+                            ...galaxyData[key],
+                            color: '#333333',
+                            gradient: ['#333333', '#222222', '#444444']
+                        };
+                    }
+                });
+                
+                console.log('🌟 Updated galaxy data for client focus areas');
+            }
+        }
+        
+        // Helper function to adjust color brightness
+        function adjustColor(color, amount) {
+            const num = parseInt(color.replace("#", ""), 16);
+            const amt = Math.round(2.55 * amount);
+            const R = (num >> 16) + amt;
+            const G = (num >> 8 & 0x00FF) + amt;
+            const B = (num & 0x0000FF) + amt;
+            return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+                (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+                (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+        }
+
+        // Start data points animation immediately
+        window.addEventListener('load', () => {
+            console.log('Page loaded, checking authentication...');
+            checkAuthentication();
+        });
+    </script>
+    <!-- /wp:html -->
+
+</main>
+<!-- /wp:group -->
