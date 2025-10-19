@@ -53,6 +53,14 @@ add_action('rest_api_init', function () {
     ));
 });
 
+add_action('rest_api_init', function () {
+    register_rest_route('vl-hub/v1', '/session', array(
+        'methods'  => 'GET',
+        'permission_callback' => '__return_true',
+        'callback' => 'vl_hub_rest_session_info',
+    ));
+});
+
 // Get clients from database for Supercluster visualization
 function vl_get_clients_for_supercluster($request) {
     global $wpdb;
@@ -109,13 +117,80 @@ function vl_check_client_permissions_supercluster($request) {
     if (!is_user_logged_in()) {
         return new WP_Error('unauthorized', 'You must be logged in to access client data.', array('status' => 401));
     }
-    
+
     // Check if user has permission to view clients
     if (!current_user_can('read')) {
         return new WP_Error('forbidden', 'You do not have permission to view client data.', array('status' => 403));
     }
-    
+
     return true;
+}
+
+function vl_hub_rest_session_info($request) {
+  $default_dashboard = vl_lic_dashboard_url(null);
+  $login_url         = wp_login_url($default_dashboard);
+
+  if (!is_user_logged_in()) {
+    $response = [
+      'authenticated' => false,
+      'dashboard_url' => $default_dashboard,
+      'login_url'     => $login_url,
+      'permissions'   => [
+        'can_view_clients'   => false,
+        'can_manage_clients' => false,
+      ],
+    ];
+
+    return rest_ensure_response($response);
+  }
+
+  $user        = wp_get_current_user();
+  $license_key = trim((string) get_user_meta($user->ID, 'vl_license_key', true));
+  $client_name = trim((string) get_user_meta($user->ID, 'vl_client_name', true));
+  $license     = $license_key ? vl_lic_lookup_by_key($license_key) : null;
+
+  if (!$client_name) {
+    if ($license && !empty($license['client'])) {
+      $client_name = (string) $license['client'];
+    } else {
+      $client_name = $user->display_name ?: $user->user_login;
+    }
+  }
+
+  $dashboard_url = $license_key ? vl_lic_dashboard_url($license, $license_key) : $default_dashboard;
+
+  $response = [
+    'authenticated' => true,
+    'dashboard_url' => $dashboard_url,
+    'login_url'     => $login_url,
+    'user' => [
+      'id'           => $user->ID,
+      'display_name' => $user->display_name,
+      'email'        => $user->user_email,
+      'roles'        => array_values((array) $user->roles),
+    ],
+    'license' => null,
+    'permissions' => [
+      'can_view_clients'   => current_user_can('read'),
+      'can_manage_clients' => current_user_can('list_users') || current_user_can('manage_options'),
+    ],
+  ];
+
+  if ($license_key || $license) {
+    $key_value = $license_key ?: ($license['key'] ?? '');
+    $response['license'] = [
+      'key'            => $key_value,
+      'client_name'    => $client_name,
+      'active'         => (bool) ($license['active'] ?? false),
+      'site'           => $license['site'] ?? '',
+      'id'             => $license['id'] ?? ($license['_store_id'] ?? null),
+      'found'          => (bool) $license,
+      'slug'           => vl_lic_dashboard_segment($key_value),
+      'dashboard_url'  => $dashboard_url,
+    ];
+  }
+
+  return rest_ensure_response($response);
 }
 
 add_action('admin_menu', function () {
@@ -255,6 +330,46 @@ function vl_lic_create_with_key(string $client, string $site, string $key, bool 
 function vl_lic_redact(string $k): string {
   if (strlen($k) <= 6) return str_repeat('•', max(4, strlen($k)));
   return substr($k, 0, 6) . '…' . substr($k, -4);
+}
+
+function vl_lic_lookup_by_key(string $key): ?array {
+  $key = trim($key);
+  if ($key === '') {
+    return null;
+  }
+
+  $store = vl_lic_store_get();
+  foreach ($store as $id => $row) {
+    if (!empty($row['key']) && hash_equals($row['key'], $key)) {
+      if (!isset($row['id'])) {
+        $row['id'] = $id;
+      }
+      $row['_store_id'] = $id;
+      return $row;
+    }
+  }
+
+  return null;
+}
+
+function vl_lic_dashboard_segment(string $license_key): string {
+  $segment = preg_replace('/[^A-Za-z0-9\-]/', '-', $license_key);
+  $segment = trim($segment, '-');
+  if ($segment === '') {
+    $segment = 'dashboard';
+  }
+  return strtolower($segment);
+}
+
+function vl_lic_dashboard_url(?array $license, string $license_key = ''): string {
+  $key = $license['key'] ?? $license_key;
+  if (!$key) {
+    return home_url('/ai-constellation-console/');
+  }
+
+  $segment = vl_lic_dashboard_segment($key);
+  $path    = trailingslashit('ai-constellation-console/' . $segment);
+  return home_url('/' . $path);
 }
 function vl_status_pill_from_row(array $row): string {
   $now   = time();
@@ -508,7 +623,7 @@ add_action('rest_api_init', function () {
   register_rest_route('vl-license/v1', '/activate', [
     'methods'  => 'POST',
     'permission_callback' => '__return_true',
-    'callback' => function (WP_REST_Request $req) {
+    'callback' => function ($req) {
       $license = trim((string)$req->get_param('license'));
       $site    = esc_url_raw((string)$req->get_param('site_url'));
       $name    = sanitize_text_field((string)$req->get_param('site_name'));
@@ -542,7 +657,7 @@ add_action('rest_api_init', function () {
   register_rest_route('vl-license/v1', '/heartbeat', [
     'methods'  => 'POST',
     'permission_callback' => '__return_true',
-    'callback' => function (WP_REST_Request $req) {
+    'callback' => function ($req) {
       $license = trim((string)$req->get_param('license'));
       $site    = esc_url_raw((string)$req->get_param('site_url'));
       $wpv     = sanitize_text_field((string)$req->get_param('wp_version'));
@@ -1636,7 +1751,7 @@ add_action('rest_api_init', function () {
   register_rest_route('luna_widget/v1', '/system/comprehensive', [
     'methods' => 'GET',
     'permission_callback' => '__return_true',
-    'callback' => function (WP_REST_Request $req) {
+    'callback' => function ($req) {
       $license = $req->get_header('X-Luna-License') ?: $req->get_param('license');
       if (!$license) {
         return new WP_REST_Response(['error' => 'License required'], 401);
@@ -1742,7 +1857,7 @@ add_action('rest_api_init', function () {
   register_rest_route('luna_widget/v1', '/conversations/log', [
     'methods' => 'POST',
     'permission_callback' => '__return_true',
-    'callback' => function (WP_REST_Request $req) {
+    'callback' => function ($req) {
       $license = $req->get_header('X-Luna-License') ?: $req->get_param('license');
       if (!$license) {
         // error_log('[Luna Hub] Conversation log: No license provided');
@@ -1788,7 +1903,7 @@ add_action('rest_api_init', function () {
   register_rest_route('vl-hub/v1', '/profile/security', [
     'methods' => 'POST',
     'permission_callback' => '__return_true',
-    'callback' => function (WP_REST_Request $req) {
+    'callback' => function ($req) {
       $license = $req->get_header('X-Luna-License') ?: $req->get_param('license');
       if (!$license) {
         return new WP_REST_Response(['error' => 'License required'], 401);
@@ -1842,7 +1957,7 @@ add_action('rest_api_init', function () {
   register_rest_route('luna_widget/v1', '/test', [
     'methods' => 'GET',
     'permission_callback' => '__return_true',
-    'callback' => function (WP_REST_Request $req) {
+    'callback' => function ($req) {
       $license = $req->get_header('X-Luna-License') ?: $req->get_param('license');
       
       return new WP_REST_Response([
@@ -1864,7 +1979,7 @@ add_action('rest_api_init', function () {
   register_rest_route('luna_widget/v1', '/force-refresh', [
     'methods' => 'POST',
     'permission_callback' => '__return_true',
-    'callback' => function (WP_REST_Request $req) {
+    'callback' => function ($req) {
       $license = $req->get_header('X-Luna-License') ?: $req->get_param('license');
       if (empty($license)) {
         return new WP_REST_Response(['error' => 'License key required'], 400);
@@ -1905,7 +2020,7 @@ add_action('rest_api_init', function () {
   register_rest_route('luna_widget/v1', '/keywords/sync', [
     'methods' => 'POST',
     'permission_callback' => '__return_true',
-    'callback' => function (WP_REST_Request $req) {
+    'callback' => function ($req) {
       $license = $req->get_header('X-Luna-License') ?: $req->get_param('license');
       if (empty($license)) {
         return new WP_REST_Response(['error' => 'License key required'], 400);
@@ -1950,59 +2065,6 @@ add_action('rest_api_init', function () {
     }
   ]);
 });
-
-/**
- * Supercluster API endpoint for client data
- */
-add_action('rest_api_init', function () {
-    register_rest_route('vl-hub/v1', '/clients', array(
-        'methods' => 'GET',
-        'callback' => 'vl_get_clients_for_supercluster',
-        'permission_callback' => 'vl_check_client_permissions_supercluster'
-    ));
-});
-
-function vl_get_clients_for_supercluster($request) {
-    global $wpdb;
-    $licenses = get_option('vl_licenses_registry', array());
-    $clients = array();
-    
-    if (!empty($licenses) && is_array($licenses)) {
-        foreach ($licenses as $license_key => $license_data) {
-            if (isset($license_data['client_name']) && isset($license_data['status']) && $license_data['status'] === 'active') {
-                $clients[] = array(
-                    'client_name' => $license_data['client_name'],
-                    'license_key' => $license_key,
-                    'status' => $license_data['status']
-                );
-            }
-        }
-    }
-    
-    // Fallback if no clients found in registry
-    if (empty($clients)) {
-        $clients = array(
-            array('client_name' => 'Commonwealth Health Services', 'license_key' => 'VL-VYAK-9BPQ-NKCC', 'status' => 'active'),
-            array('client_name' => 'Site Assembly', 'license_key' => 'VL-H2K3-ZFQK-DKDC', 'status' => 'active'),
-            array('client_name' => 'Visible Light', 'license_key' => 'VL-AWJJ-8J6S-GD6R', 'status' => 'active')
-        );
-    }
-    
-    return array('success' => true, 'clients' => $clients, 'count' => count($clients), 'source' => !empty($licenses) ? 'database' : 'fallback');
-}
-
-function vl_check_client_permissions_supercluster($request) {
-    // Require user to be logged in to access client data
-    if (!is_user_logged_in()) {
-        return new WP_Error('unauthorized', 'You must be logged in to access client data.', array('status' => 401));
-    }
-    
-    if (!current_user_can('read')) {
-        return new WP_Error('forbidden', 'You do not have permission to view client data.', array('status' => 403));
-    }
-    
-    return true;
-}
 
 /**
  * Create WordPress users for VL clients
@@ -2118,6 +2180,22 @@ function vl_client_users_page() {
     echo '</tbody></table>';
     echo '</div>';
 }
+
+add_filter('login_redirect', function ($redirect_to, $requested_redirect_to, $user) {
+  if ($user instanceof WP_User) {
+    $license_key = trim((string) get_user_meta($user->ID, 'vl_license_key', true));
+    if ($license_key !== '') {
+      $license = vl_lic_lookup_by_key($license_key);
+      if ($license && empty($license['active'])) {
+        return $redirect_to ?: home_url('/ai-constellation-console/');
+      }
+
+      return vl_lic_dashboard_url($license, $license_key);
+    }
+  }
+
+  return $redirect_to ?: home_url('/ai-constellation-console/');
+}, 10, 3);
 
 /* =======================================================================
  * Temporary Test Function
