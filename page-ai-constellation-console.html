@@ -264,34 +264,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r158/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/examples/js/controls/OrbitControls.js"></script>
     
-    <!-- WordPress API Scripts -->
-    <script>
-        // WordPress API settings - will be set dynamically
-        window.wpApiSettings = {
-            root: '/wp-json/',
-            nonce: ''
-        };
-        
-        // Try to get nonce from WordPress
-        fetch('/wp-json/wp/v2/users/me')
-            .then(response => {
-                if (response.ok) {
-                    // User is logged in, try to get nonce
-                    return fetch('/wp-json/wp/v2/');
-                }
-                throw new Error('Not logged in');
-            })
-            .then(response => {
-                const nonce = response.headers.get('X-WP-Nonce');
-                if (nonce) {
-                    window.wpApiSettings.nonce = nonce;
-                    console.log('WordPress nonce obtained');
-                }
-            })
-            .catch(error => {
-                console.log('WordPress authentication not available:', error.message);
-            });
-    </script>
     <script>
         // Fallback CDN sources
         if (typeof THREE === 'undefined') {
@@ -348,162 +320,193 @@
     </script>
 
     <script>
-        // Client-specific configuration
-        const CLIENT_ID = 'current_user';
-        const REST_URL = 'https://hub.visiblelight.ai/wp-json/vl-hub/v1/constellation';
         const ICONS_URL = '/wp-content/plugins/visiblelight/luna-license-manager/assets/icons';
-        
-        // Version identifier for debugging
-        console.log('🚀 Supercluster Template v2.0 - Updated with real VL clients only');
-        
-        // Client selection logic
-        function getClientData() {
-            // Get client ID from URL parameter or current user
-            const urlParams = new URLSearchParams(window.location.search);
-            const urlClientId = urlParams.get('client');
-            
-            // Use URL parameter if provided, otherwise use 'current'
-            const selectedClientId = urlClientId || 'current';
-            
-            console.log('Selected Client ID:', selectedClientId);
-            return selectedClientId;
+        const SESSION_ENDPOINT = '/wp-json/vl-hub/v1/session';
+        const CLIENTS_ENDPOINT = '/wp-json/vl-hub/v1/clients';
+
+        let sessionInfo = null;
+        const clientsCache = new Map();
+        let ACTIVE_CLIENT_ID = null;
+        let ACTIVE_CLIENT_NAME = null;
+        let ACTIVE_LICENSE_RECORD = null;
+
+        console.log('🚀 Supercluster Template v2.1 - Hub-authenticated session');
+
+        function buildDashboardUrlFromKey(key) {
+            if (!key) {
+                return '/ai-constellation-console/';
+            }
+
+            const segment = key
+                .toString()
+                .replace(/[^A-Za-z0-9\-]/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '')
+                .toLowerCase();
+
+            return '/ai-constellation-console/' + (segment || 'dashboard') + '/';
         }
-        
-        // Get the actual client ID
-        const ACTIVE_CLIENT_ID = getClientData();
-        
-        // Load clients from WordPress database
-        function loadClients() {
-            console.log('🚀 Starting to load clients...');
-            
-            // Get nonce from WordPress - try multiple methods
-            let nonce = '';
-            
-            // Method 1: wpApiSettings
-            if (typeof wpApiSettings !== 'undefined' && wpApiSettings.nonce) {
-                nonce = wpApiSettings.nonce;
-                console.log('✅ Nonce from wpApiSettings:', nonce ? 'Yes' : 'No');
-            }
-            
-            // Method 2: Meta tag
-            if (!nonce) {
-                const nonceMeta = document.querySelector('meta[name="wp-nonce"]');
-                if (nonceMeta) {
-                    nonce = nonceMeta.getAttribute('content');
-                    console.log('✅ Nonce from meta tag:', nonce ? 'Yes' : 'No');
-                }
-            }
-            
-            // Method 3: Try to get nonce from REST API
-            if (!nonce) {
-                console.log('🔍 Attempting to get nonce from REST API...');
-                fetch('/wp-json/wp/v2/', {
-                    method: 'GET',
-                    credentials: 'same-origin'
-                })
-                .then(response => {
-                    const nonceHeader = response.headers.get('X-WP-Nonce');
-                    if (nonceHeader) {
-                        nonce = nonceHeader;
-                        console.log('✅ Nonce from REST API:', nonce ? 'Yes' : 'No');
-                    } else {
-                        console.log('⚠️ No nonce found in REST API response');
-                    }
-                    
-                    // Make API call with whatever nonce we have
-                    loadClientsWithNonce(nonce);
-                })
-                .catch(error => {
-                    console.log('❌ Failed to get nonce from REST API:', error);
-                    loadClientsWithNonce('');
-                });
+
+        function ensureClientSelectorVisibility() {
+            const clientSelector = document.querySelector('.client-selector');
+            if (!clientSelector) {
                 return;
             }
-            
-            // Make API request with nonce
-            loadClientsWithNonce(nonce);
-        }
-        
-        // Separate function to make API call with nonce
-        function loadClientsWithNonce(nonce) {
-            console.log('🔑 Making API call with nonce:', nonce ? 'Yes' : 'No');
-            
-            // Prepare headers
-            const headers = {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            };
-            
-            // Add nonce if available
-            if (nonce) {
-                headers['X-WP-Nonce'] = nonce;
+
+            if (sessionInfo && sessionInfo.permissions && sessionInfo.permissions.can_manage_clients) {
+                clientSelector.style.display = 'block';
+            } else {
+                clientSelector.style.display = 'none';
             }
-            
-            // Make API request
-            fetch('/wp-json/vl-hub/v1/clients', {
-                method: 'GET',
-                headers: headers,
-                credentials: 'same-origin'
-            })
-                .then(response => {
-                    console.log('📡 API Response Status:', response.status);
-                    console.log('📡 API Response Headers:', response.headers);
-                    
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('📊 API Response Data:', data);
-                    
-                    const clientSelect = document.getElementById('clientSelect');
-                    clientSelect.innerHTML = ''; // Clear loading state
-                    
-                    if (data && data.clients && data.clients.length > 0) {
-                        data.clients.forEach(client => {
-                            const option = document.createElement('option');
-                            option.value = client.license_key;
-                            option.textContent = client.client_name;
-                            clientSelect.appendChild(option);
-                        });
-                        console.log('✅ Successfully loaded', data.clients.length, 'real VL clients from API');
-                        console.log('🎯 VL Client names:', data.clients.map(c => c.client_name).join(', '));
-                    } else {
-                        throw new Error('No VL clients data received from API');
-                    }
-                    
-                    // Set current selection based on URL parameter
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const currentClient = urlParams.get('client');
-                    if (currentClient) {
-                        clientSelect.value = currentClient;
-                        console.log('🎯 Set current VL client to:', currentClient);
-                    }
-                })
-                .catch(error => {
-                    console.error('❌ API call failed:', error);
-                    console.log('🚫 No fallback - only real VL clients will be shown');
-                    
-                    // Show error message instead of fallback
-                    const clientSelect = document.getElementById('clientSelect');
-                    clientSelect.innerHTML = '<option value="error">Failed to load VL clients</option>';
-                    
-                    console.log('⚠️ VL Client loading failed. Check API endpoint and authentication.');
-                });
         }
-        
-        // Client switching function
+
+        async function bootstrapClientSession() {
+            try {
+                const response = await fetch(SESSION_ENDPOINT, {
+                    credentials: 'same-origin',
+                    cache: 'no-store'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Session endpoint returned ' + response.status);
+                }
+
+                const data = await response.json();
+                sessionInfo = data;
+
+                if (!data.authenticated) {
+                    const loginTarget = data.login_url || '/wp-login.php';
+                    window.location.replace(loginTarget);
+                    return;
+                }
+
+                ACTIVE_LICENSE_RECORD = data.license || null;
+                ACTIVE_CLIENT_ID = ACTIVE_LICENSE_RECORD ? (ACTIVE_LICENSE_RECORD.key || ACTIVE_LICENSE_RECORD.id) : 'current';
+                ACTIVE_CLIENT_NAME = ACTIVE_LICENSE_RECORD ? ACTIVE_LICENSE_RECORD.client_name : (data.user ? data.user.display_name : 'Current Client');
+
+                if (!data.permissions || !data.permissions.can_manage_clients) {
+                    const desiredUrl = (ACTIVE_LICENSE_RECORD && ACTIVE_LICENSE_RECORD.dashboard_url) ? ACTIVE_LICENSE_RECORD.dashboard_url : data.dashboard_url;
+                    if (desiredUrl) {
+                        const expected = new URL(desiredUrl, window.location.origin);
+                        const current = new URL(window.location.href);
+                        if (current.pathname !== expected.pathname) {
+                            window.location.replace(expected.href);
+                            return;
+                        }
+                    }
+                }
+
+                await populateClientSelector();
+                updateClientUI(ACTIVE_CLIENT_NAME, ACTIVE_LICENSE_RECORD ? ACTIVE_LICENSE_RECORD.key : null);
+                loadClientSpecificData(ACTIVE_LICENSE_RECORD);
+            } catch (error) {
+                console.error('Failed to load VL Hub session', error);
+                window.location.replace('/supercluster-login/');
+            }
+        }
+
+        async function populateClientSelector() {
+            const clientSelect = document.getElementById('clientSelect');
+            if (!clientSelect) {
+                return;
+            }
+
+            clientsCache.clear();
+            clientSelect.innerHTML = '';
+
+            if (sessionInfo && sessionInfo.license) {
+                const option = document.createElement('option');
+                option.value = sessionInfo.license.key || 'current';
+                option.textContent = sessionInfo.license.client_name || 'Your Constellation';
+                clientSelect.appendChild(option);
+                clientsCache.set(option.value, sessionInfo.license);
+                clientSelect.value = option.value;
+            } else if (sessionInfo && sessionInfo.user) {
+                const option = document.createElement('option');
+                option.value = 'current';
+                option.textContent = sessionInfo.user.display_name || 'Current Session';
+                clientSelect.appendChild(option);
+                clientSelect.value = option.value;
+            }
+
+            const canManage = sessionInfo && sessionInfo.permissions && sessionInfo.permissions.can_manage_clients;
+
+            if (canManage) {
+                try {
+                    const response = await fetch(CLIENTS_ENDPOINT, {
+                        credentials: 'same-origin',
+                        cache: 'no-store'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Client list request failed: ' + response.status);
+                    }
+
+                    const list = await response.json();
+                    if (list && Array.isArray(list.clients)) {
+                        list.clients.forEach(client => {
+                            if (!clientsCache.has(client.license_key)) {
+                                const option = document.createElement('option');
+                                option.value = client.license_key;
+                                option.textContent = client.client_name;
+                                clientSelect.appendChild(option);
+                                clientsCache.set(option.value, {
+                                    id: client.license_key,
+                                    key: client.license_key,
+                                    slug: client.license_key.toLowerCase(),
+                                    client_name: client.client_name,
+                                    status: client.status,
+                                    dashboard_url: new URL(buildDashboardUrlFromKey(client.license_key), window.location.origin).href
+                                });
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.warn('Unable to load Visible Light client list', error);
+                    if (!clientSelect.options.length) {
+                        const option = document.createElement('option');
+                        option.value = 'error';
+                        option.textContent = 'Unable to load clients';
+                        clientSelect.appendChild(option);
+                    }
+                }
+
+                clientSelect.disabled = false;
+            } else {
+                clientSelect.disabled = true;
+            }
+
+            ensureClientSelectorVisibility();
+            ACTIVE_CLIENT_ID = clientSelect.value || ACTIVE_CLIENT_ID;
+        }
+
         function switchClient() {
             const clientSelect = document.getElementById('clientSelect');
-            const selectedClient = clientSelect.value;
-            
-            if (selectedClient === 'current') {
-                // Reload page without client parameter
-                window.location.href = window.location.pathname;
+            if (!clientSelect) {
+                return;
+            }
+
+            const selection = clientSelect.value;
+            const selectionInfo = clientsCache.get(selection);
+
+            if (selectionInfo) {
+                ACTIVE_LICENSE_RECORD = selectionInfo;
+                ACTIVE_CLIENT_ID = selectionInfo.key || selection;
+                ACTIVE_CLIENT_NAME = selectionInfo.client_name || ACTIVE_CLIENT_NAME;
+                updateClientUI(ACTIVE_CLIENT_NAME, selectionInfo.key || null);
+                loadClientSpecificData(selectionInfo);
+            } else if (sessionInfo && sessionInfo.license && (selection === sessionInfo.license.key || selection === 'current')) {
+                ACTIVE_LICENSE_RECORD = sessionInfo.license;
+                ACTIVE_CLIENT_ID = sessionInfo.license.key;
+                ACTIVE_CLIENT_NAME = sessionInfo.license.client_name || ACTIVE_CLIENT_NAME;
+                updateClientUI(ACTIVE_CLIENT_NAME, sessionInfo.license.key);
+                loadClientSpecificData(sessionInfo.license);
             } else {
-                // Reload page with client parameter
-                window.location.href = window.location.pathname + '?client=' + selectedClient;
+                ACTIVE_LICENSE_RECORD = null;
+                ACTIVE_CLIENT_ID = selection || 'current';
+                ACTIVE_CLIENT_NAME = sessionInfo && sessionInfo.user ? sessionInfo.user.display_name : 'Current Client';
+                updateClientUI(ACTIVE_CLIENT_NAME, null);
+                loadClientSpecificData(null);
             }
         }
         
@@ -590,6 +593,14 @@
                 position: { x: 6, y: -5, z: -12 }
             }
         };
+
+        const baseGalaxyTemplate = JSON.parse(JSON.stringify(galaxyData));
+
+        function resetGalaxyData() {
+            Object.keys(baseGalaxyTemplate).forEach(key => {
+                galaxyData[key] = { ...baseGalaxyTemplate[key] };
+            });
+        }
 
         let scene, camera, renderer, controls;
         let galaxies = {};
@@ -1162,137 +1173,6 @@
             return true;
         }
         
-        // Load client-specific data
-        function loadClientData() {
-            console.log('Loading data for client:', ACTIVE_CLIENT_ID);
-            
-            // Map license keys to client names for better logging
-            const clientMap = {
-                'VL-VYAK-9BPQ-NKCC': 'Commonwealth Health Services',
-                'VL-H2K3-ZFQK-DKDC': 'Site Assembly',
-                'VL-AWJJ-8J6S-GD6R': 'Visible Light'
-            };
-            
-            const clientName = clientMap[ACTIVE_CLIENT_ID] || 'Current User';
-            console.log('Loading data for:', clientName);
-            
-            // Here you would fetch client-specific data from your API
-            // For now, we'll use the default galaxy data
-            // You can modify this to load different data based on the client
-            
-            // Example: Load different galaxy configurations per client
-            if (ACTIVE_CLIENT_ID === 'VL-VYAK-9BPQ-NKCC') {
-                // Commonwealth Health Services specific configuration
-                console.log('Loading Commonwealth Health Services configuration');
-            } else if (ACTIVE_CLIENT_ID === 'VL-H2K3-ZFQK-DKDC') {
-                // Site Assembly specific configuration
-                console.log('Loading Site Assembly configuration');
-            } else if (ACTIVE_CLIENT_ID === 'VL-AWJJ-8J6S-GD6R') {
-                // Visible Light specific configuration
-                console.log('Loading Visible Light configuration');
-            } else {
-                // Default configuration
-                console.log('Loading default configuration');
-            }
-        }
-        
-        // Check if user is logged in and get their client data
-        function checkAuthentication() {
-            console.log('🔍 Starting authentication check...');
-            
-            // Try to make a simple API call to check authentication
-            fetch('/wp-json/wp/v2/users/me', {
-                credentials: 'same-origin'
-            })
-            .then(response => {
-                console.log('📡 Authentication response status:', response.status);
-                if (response.ok) {
-                    console.log('✅ User is authenticated');
-                    return response.json();
-                } else {
-                    console.log('❌ Authentication failed with status:', response.status);
-                    throw new Error('Not authenticated');
-                }
-            })
-            .then(userData => {
-                console.log('👤 User data received:', userData);
-                // Get user's VL license key from meta
-                loadUserClientData(userData.id);
-            })
-            .catch(error => {
-                console.log('❌ Authentication check failed:', error);
-                console.log('🔄 Redirecting to login page...');
-                window.location.href = '/supercluster-login/';
-            });
-        }
-        
-        // Load client-specific data based on user's VL license key
-        function loadUserClientData(userId) {
-            console.log('🔍 Loading user client data for user ID:', userId);
-            
-            // Get user meta to find their VL license key
-            fetch(`/wp-json/wp/v2/users/${userId}`, {
-                credentials: 'same-origin'
-            })
-            .then(response => {
-                console.log('📡 User data response status:', response.status);
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch user data: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(userData => {
-                console.log('👤 Basic user data:', userData);
-                
-                // Try to get user meta data with edit context
-                return fetch(`/wp-json/wp/v2/users/${userId}?context=edit`, {
-                    credentials: 'same-origin'
-                });
-            })
-            .then(response => {
-                console.log('📡 User meta response status:', response.status);
-                if (!response.ok) {
-                    console.log('⚠️ Could not fetch user meta, using basic user data');
-                    // Return the basic user data if meta fetch fails
-                    return { meta: {} };
-                }
-                return response.json();
-            })
-            .then(userData => {
-                console.log('🔑 User meta data:', userData);
-                
-                // Find VL license key in meta
-                const vlLicenseKey = userData.meta?.vl_license_key || userData.vl_license_key;
-                const clientName = userData.meta?.vl_client_name || userData.vl_client_name;
-                
-                if (vlLicenseKey) {
-                    console.log('🎯 Found VL License Key:', vlLicenseKey);
-                    console.log('🏢 Client Name:', clientName);
-                    
-                    // Update UI to show client-specific view
-                    updateClientUI(clientName, vlLicenseKey);
-                    
-                    // Load client-specific data
-                    loadClientSpecificData(vlLicenseKey, clientName);
-                    createDataPointsAnimation();
-                } else {
-                    console.log('❌ No VL license key found for user, showing general view');
-                    // Fallback to general view - DON'T redirect
-                    loadClients();
-                    loadClientData();
-                    createDataPointsAnimation();
-                }
-            })
-            .catch(error => {
-                console.error('❌ Error loading user client data:', error);
-                console.log('🔄 Falling back to general view');
-                // Fallback to general view - DON'T redirect
-                loadClients();
-                loadClientData();
-                createDataPointsAnimation();
-            });
-        }
-        
         // Update UI to show client-specific information
         function updateClientUI(clientName, licenseKey) {
             // Update header to show client name
@@ -1300,29 +1180,38 @@
             if (subtitle) {
                 subtitle.textContent = `${clientName} - WebOps Intelligence Supercluster`;
             }
-            
-            // Hide client selector since this is client-specific
-            const clientSelector = document.querySelector('.client-selector');
-            if (clientSelector) {
-                clientSelector.style.display = 'none';
-            }
-            
+
+            ensureClientSelectorVisibility();
+
             // Update info panel title
             const superclusterTitle = document.querySelector('.supercluster-title');
             if (superclusterTitle) {
                 superclusterTitle.textContent = `${clientName} Supercluster`;
             }
-            
-            console.log(`🎨 Updated UI for client: ${clientName}`);
+
+            if (licenseKey) {
+                console.log(`🎨 Updated UI for client: ${clientName} (License: ${licenseKey})`);
+            } else {
+                console.log(`🎨 Updated UI for client: ${clientName}`);
+            }
         }
-        
+
         // Load client-specific data based on license key
-        function loadClientSpecificData(licenseKey, clientName) {
+        function loadClientSpecificData(licenseInfo) {
+            resetGalaxyData();
+
+            const clientName = (licenseInfo && licenseInfo.client_name) || ACTIVE_CLIENT_NAME || 'Visible Light Client';
+            const licenseKey = (licenseInfo && (licenseInfo.id || licenseInfo.key)) || 'default';
+
             console.log(`📊 Loading data for client: ${clientName} (${licenseKey})`);
-            
-            // Map license keys to specific client configurations
+
             const clientConfigs = {
                 'lic_3d2c5795-b6c2-482f-8cb9-cf36603768e8': {
+                    name: 'Commonwealth Health Services',
+                    color: '#2B6AFF',
+                    focus: ['infrastructure', 'security', 'analytics', 'identity']
+                },
+                'vl-vyak-9bpq-nkcc': {
                     name: 'Commonwealth Health Services',
                     color: '#2B6AFF',
                     focus: ['infrastructure', 'security', 'analytics', 'identity']
@@ -1332,35 +1221,51 @@
                     color: '#D62A42',
                     focus: ['content', 'search', 'marketing', 'ecommerce']
                 },
+                'vl-h2k3-zfqk-dkdc': {
+                    name: 'Site Assembly',
+                    color: '#D62A42',
+                    focus: ['content', 'search', 'marketing', 'ecommerce']
+                },
                 'lic_ce0a7680-26eb-484b-ac1a-bb075d944322': {
+                    name: 'Visible Light',
+                    color: '#F4C542',
+                    focus: ['cloudops', 'competitive', 'analytics', 'infrastructure']
+                },
+                'vl-awjj-8j6s-gd6r': {
                     name: 'Visible Light',
                     color: '#F4C542',
                     focus: ['cloudops', 'competitive', 'analytics', 'infrastructure']
                 }
             };
-            
-            const clientConfig = clientConfigs[licenseKey];
+
+            let clientConfig = null;
+            if (licenseInfo) {
+                const candidates = [licenseInfo.id, licenseInfo.key, licenseInfo.slug]
+                    .filter(Boolean)
+                    .flatMap(value => [value, value.toLowerCase()]);
+                for (const candidate of candidates) {
+                    if (clientConfigs[candidate]) {
+                        clientConfig = clientConfigs[candidate];
+                        break;
+                    }
+                }
+            }
+
             if (clientConfig) {
                 console.log(`🎯 Using client config for ${clientConfig.name}`);
-                
-                // Filter galaxy data to show only relevant categories
-                const filteredGalaxyData = {};
-                clientConfig.focus.forEach(key => {
-                    if (galaxyData[key]) {
-                        filteredGalaxyData[key] = {
+
+                Object.keys(galaxyData).forEach(key => {
+                    if (clientConfig.focus.includes(key)) {
+                        galaxyData[key] = {
                             ...galaxyData[key],
                             color: clientConfig.color,
-                            gradient: [clientConfig.color, adjustColor(clientConfig.color, -20), adjustColor(clientConfig.color, 20)]
+                            gradient: [
+                                clientConfig.color,
+                                adjustColor(clientConfig.color, -20),
+                                adjustColor(clientConfig.color, 20)
+                            ]
                         };
-                    }
-                });
-                
-                // Update global galaxy data
-                Object.keys(galaxyData).forEach(key => {
-                    if (filteredGalaxyData[key]) {
-                        galaxyData[key] = filteredGalaxyData[key];
                     } else {
-                        // Dim out non-relevant galaxies
                         galaxyData[key] = {
                             ...galaxyData[key],
                             color: '#333333',
@@ -1368,8 +1273,10 @@
                         };
                     }
                 });
-                
+
                 console.log('🌟 Updated galaxy data for client focus areas');
+            } else {
+                console.log('ℹ️ Using default galaxy configuration');
             }
         }
         
@@ -1387,8 +1294,8 @@
 
         // Start data points animation immediately
         window.addEventListener('load', () => {
-            console.log('Page loaded, checking authentication...');
-            checkAuthentication();
+            console.log('Page loaded, bootstrapping VL Hub session...');
+            bootstrapClientSession();
         });
     </script>
     <!-- /wp:html -->
