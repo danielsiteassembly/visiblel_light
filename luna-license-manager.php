@@ -621,7 +621,7 @@ add_action('rest_api_init', function () {
   register_rest_route('vl-license/v1', '/activate', [
     'methods'  => 'POST',
     'permission_callback' => '__return_true',
-    'callback' => function (WP_REST_Request $req) {
+    'callback' => function ($req) {
       $license = trim((string)$req->get_param('license'));
       $site    = esc_url_raw((string)$req->get_param('site_url'));
       $name    = sanitize_text_field((string)$req->get_param('site_name'));
@@ -655,7 +655,7 @@ add_action('rest_api_init', function () {
   register_rest_route('vl-license/v1', '/heartbeat', [
     'methods'  => 'POST',
     'permission_callback' => '__return_true',
-    'callback' => function (WP_REST_Request $req) {
+    'callback' => function ($req) {
       $license = trim((string)$req->get_param('license'));
       $site    = esc_url_raw((string)$req->get_param('site_url'));
       $wpv     = sanitize_text_field((string)$req->get_param('wp_version'));
@@ -1749,7 +1749,7 @@ add_action('rest_api_init', function () {
   register_rest_route('luna_widget/v1', '/system/comprehensive', [
     'methods' => 'GET',
     'permission_callback' => '__return_true',
-    'callback' => function (WP_REST_Request $req) {
+    'callback' => function ($req) {
       $license = $req->get_header('X-Luna-License') ?: $req->get_param('license');
       if (!$license) {
         return new WP_REST_Response(['error' => 'License required'], 401);
@@ -1855,7 +1855,7 @@ add_action('rest_api_init', function () {
   register_rest_route('luna_widget/v1', '/conversations/log', [
     'methods' => 'POST',
     'permission_callback' => '__return_true',
-    'callback' => function (WP_REST_Request $req) {
+    'callback' => function ($req) {
       $license = $req->get_header('X-Luna-License') ?: $req->get_param('license');
       if (!$license) {
         // error_log('[Luna Hub] Conversation log: No license provided');
@@ -1901,7 +1901,7 @@ add_action('rest_api_init', function () {
   register_rest_route('vl-hub/v1', '/profile/security', [
     'methods' => 'POST',
     'permission_callback' => '__return_true',
-    'callback' => function (WP_REST_Request $req) {
+    'callback' => function ($req) {
       $license = $req->get_header('X-Luna-License') ?: $req->get_param('license');
       if (!$license) {
         return new WP_REST_Response(['error' => 'License required'], 401);
@@ -1955,7 +1955,7 @@ add_action('rest_api_init', function () {
   register_rest_route('luna_widget/v1', '/test', [
     'methods' => 'GET',
     'permission_callback' => '__return_true',
-    'callback' => function (WP_REST_Request $req) {
+    'callback' => function ($req) {
       $license = $req->get_header('X-Luna-License') ?: $req->get_param('license');
       
       return new WP_REST_Response([
@@ -1977,7 +1977,7 @@ add_action('rest_api_init', function () {
   register_rest_route('luna_widget/v1', '/force-refresh', [
     'methods' => 'POST',
     'permission_callback' => '__return_true',
-    'callback' => function (WP_REST_Request $req) {
+    'callback' => function ($req) {
       $license = $req->get_header('X-Luna-License') ?: $req->get_param('license');
       if (empty($license)) {
         return new WP_REST_Response(['error' => 'License key required'], 400);
@@ -2018,7 +2018,7 @@ add_action('rest_api_init', function () {
   register_rest_route('luna_widget/v1', '/keywords/sync', [
     'methods' => 'POST',
     'permission_callback' => '__return_true',
-    'callback' => function (WP_REST_Request $req) {
+    'callback' => function ($req) {
       $license = $req->get_header('X-Luna-License') ?: $req->get_param('license');
       if (empty($license)) {
         return new WP_REST_Response(['error' => 'License key required'], 400);
