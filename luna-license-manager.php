@@ -126,12 +126,12 @@ function vl_check_client_permissions_supercluster($request) {
     return true;
 }
 
-function vl_hub_rest_session_info($request) {
+function vl_hub_rest_session_info(WP_REST_Request $request): WP_REST_Response {
   $default_dashboard = vl_lic_dashboard_url(null);
   $login_url         = wp_login_url($default_dashboard);
 
   if (!is_user_logged_in()) {
-    $response = [
+    return new WP_REST_Response([
       'authenticated' => false,
       'dashboard_url' => $default_dashboard,
       'login_url'     => $login_url,
@@ -139,9 +139,7 @@ function vl_hub_rest_session_info($request) {
         'can_view_clients'   => false,
         'can_manage_clients' => false,
       ],
-    ];
-
-    return rest_ensure_response($response);
+    ], 200);
   }
 
   $user        = wp_get_current_user();
@@ -190,7 +188,7 @@ function vl_hub_rest_session_info($request) {
     ];
   }
 
-  return rest_ensure_response($response);
+  return new WP_REST_Response($response, 200);
 }
 
 add_action('admin_menu', function () {
