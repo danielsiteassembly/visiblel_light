@@ -138,18 +138,23 @@
     <script>
         // Check if user is already logged in
         document.addEventListener('DOMContentLoaded', function() {
-            fetch('https://visiblelight.ai/wp-json/wp/v2/users/me', {
+            fetch('https://visiblelight.ai/wp-json/vl-hub/v1/session', {
                 credentials: 'include'
             })
-            .then(response => {
-                if (response.ok) {
-                    // User is already logged in, redirect to console
-                    window.location.href = 'https://visiblelight.ai/ai-constellation-console/';
+            .then(response => response.ok ? response.json() : null)
+            .then(data => {
+                if (!data) {
+                    return;
+                }
+
+                if (data.authenticated) {
+                    var target = (data.license && data.license.dashboard_url) || data.dashboard_url || 'https://visiblelight.ai/ai-constellation-console/';
+                    window.location.href = target;
                 }
             })
-            .catch(error => {
+            .catch(function(error) {
                 // User not logged in, show login page
-                console.log('User not authenticated, showing login page');
+                console.log('User not authenticated, showing login page', error);
             });
         });
     </script>
